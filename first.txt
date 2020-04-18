@@ -1,0 +1,36 @@
+const request = require('request-promise');
+const cheerio = require('cheerio');
+const fs = require("fs");
+const json2csv = require('json2csv').Parser;
+
+const websURL = "https://stackoverflow.com/questions/61133917/404-error-when-submitting-user-form-in-the-registrationcontroller-laravel";
+
+(
+    async() => {
+    const websData = []
+    
+        const response = await request({
+            uri : websURL,
+            headers : {
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "accept-encoding": "gzip, deflate, br",
+                "accept-language": "en-US,en;q=0.9"
+            },
+            gzip : true
+        })
+        
+        let $ = cheerio.load(response)
+        let question = $('a[class="question-hyperlink"]').text().trim()
+        let answer = $('div[class="post-text"]').text().trim()
+    
+        websData.push({
+            question,
+            answer
+        });
+    
+    const j2cp = new json2csv()
+    const csv = j2cp.parse(websData)
+    
+    fs.writeFileSync("./stackoverflow.csv", csv, "utf-8")
+
+})()
